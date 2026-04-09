@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# redis
+dump.rdb
+
+# development notes (local only)
+*_SUMMARY.md
+*_INSTRUCTIONS.md
+*_CHECKLIST.md
+*_SETUP.md
+QUICK_START.*
+TESTING.md
+.claude/

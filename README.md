@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# One Word Search - Unlimited
+
+An unlimited version of the word search puzzle game, inspired by [onewordsearch.com](https://onewordsearch.com). I loved playing the original game but wanted to enjoy unlimited puzzles without restrictions, so I built my own version!
+
+## Features
+
+- **Unlimited Puzzles**: Play as many word search puzzles as you want
+- **Daily Challenges**: New curated puzzles available daily
+- **Random Puzzles**: Generate random puzzles on demand
+- **Progress Tracking**: Save your game completion history
+- **Leaderboard**: Compete with other players based on completion time and stars earned
+- **User Authentication**: Secure sign-up and login with email/password
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Caching**: Redis
+- **Authentication**: Supabase Auth
+- **Testing**: Vitest
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ and npm
+- A Supabase account and project
+- Redis server (for leaderboard worker)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd onewordsearchv2
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+   - Copy `.env.example` to `.env.local`
+   - Fill in your Supabase credentials from your [Supabase dashboard](https://supabase.com/dashboard)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+4. Run database migrations:
+```bash
+npm run migrate:apply
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. Start the development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+6. (Optional) Start the leaderboard worker for real-time rankings:
+```bash
+npm run worker:start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Visit [http://localhost:3000](http://localhost:3000) to start playing!
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/
+│   ├── api/           # API routes (puzzle, progress, leaderboard)
+│   ├── auth/          # Authentication pages
+│   ├── puzzle/        # Puzzle game page
+│   ├── leaderboard/   # Leaderboard page
+│   └── page.tsx       # Home page
+├── components/        # React components
+├── hooks/            # Custom React hooks
+├── services/         # Backend services (Redis, auth verification)
+├── types/            # TypeScript type definitions
+└── utils/            # Utility functions
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## API Endpoints
+
+- `GET /api/puzzle/random` - Get a random puzzle
+- `GET /api/puzzle/daily` - Get today's daily puzzle
+- `GET /api/puzzle/[id]` - Get a specific puzzle by ID
+- `POST /api/progress/complete` - Record puzzle completion
+- `GET /api/progress/history` - Get user's completion history
+- `GET /api/leaderboard` - Get top players
+
+## Database Schema
+
+The app uses four main tables:
+- **puzzles**: Stores puzzle data (grid, words, metadata)
+- **game_results**: Records user puzzle completions with timestamps and stars
+- **user_stats**: Aggregates user statistics for leaderboard rankings
+- **profiles**: Extended user profile information
+
+## Testing
+
+Run the test suite:
+```bash
+npm test
+```
+
+Run tests with coverage:
+```bash
+npm run test:coverage
+```
+
+## Contributing
+
+This is a personal project, but feel free to fork it and make it your own!
+
+## License
+
+MIT
+
+## Acknowledgments
+
+Inspired by [onewordsearch.com](https://onewordsearch.com) - thanks for creating such an enjoyable puzzle game!
