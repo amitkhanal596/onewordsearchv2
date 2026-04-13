@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Mono, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Analytics } from "@vercel/analytics/react";
 
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
@@ -31,6 +32,7 @@ export default function RootLayout({
         className={`${spaceMono.variable} ${dmSans.variable} antialiased`}
       >
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );
