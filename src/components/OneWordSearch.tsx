@@ -299,6 +299,59 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
     });
   };
 
+  // Touch event handlers for mobile
+  const getCellFromTouch = (touch: React.Touch): Cell | null => {
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!element) return null;
+
+    // Find the cell element (it has data attributes)
+    const cellElement = element.closest('[data-row][data-col]');
+    if (!cellElement) return null;
+
+    const row = parseInt(cellElement.getAttribute('data-row') || '-1', 10);
+    const col = parseInt(cellElement.getAttribute('data-col') || '-1', 10);
+
+    if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+      return [row, col];
+    }
+    return null;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, row: number, col: number) => {
+    if (isAnimating) return;
+    e.preventDefault(); // Prevent scrolling while selecting
+    setIsSelecting(true);
+    setSelectedCells([[row, col]]);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSelecting || isAnimating) return;
+    e.preventDefault(); // Prevent scrolling while selecting
+
+    const touch = e.touches[0];
+    const cell = getCellFromTouch(touch);
+
+    if (cell) {
+      const [row, col] = cell;
+      setSelectedCells((prev) => {
+        if (prev.length === 0) return [[row, col]];
+        const [startRow, startCol] = prev[0];
+        if (startRow === row && startCol === col) return [prev[0]];
+        const direction = getDirection(startRow, startCol, row, col);
+        return direction
+          ? getFiveLetterSequence(startRow, startCol, direction) || [prev[0]]
+          : [prev[0]];
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isSelecting && !isAnimating) {
+      if (selectedCells.length === 5) checkSelectedWord();
+      setIsSelecting(false);
+    }
+  };
+
   const isCellSelected = (row: number, col: number): boolean =>
     selectedCells.some(([r, c]) => r === row && c === col);
 
@@ -404,8 +457,10 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
         {/* Game Board */}
         <div className="card-glow-cyan p-6 mb-3 animate-scale-in">
           <div
-            className="grid grid-cols-5 gap-2"
+            className="grid grid-cols-5 gap-2 touch-none"
             onMouseLeave={() => setIsSelecting(false)}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {grid.map((row, rowIndex) =>
               row.map((cell, colIndex) => {
@@ -415,6 +470,8 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
                 return (
                   <div
                     key={`${rowIndex}-${colIndex}`}
+                    data-row={rowIndex}
+                    data-col={colIndex}
                     className={`
                       w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center font-bold cursor-pointer select-none rounded-xl
                       transition-all duration-150
@@ -450,7 +507,7 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
                     onMouseEnter={() =>
                       handleCellMouseEnter(rowIndex, colIndex)
                     }
-                    onTouchStart={() => handleCellMouseDown(rowIndex, colIndex)}
+                    onTouchStart={(e) => handleTouchStart(e, rowIndex, colIndex)}
                   >
                     <span className="text-2xl sm:text-3xl font-bold">
                       {cell}

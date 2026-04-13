@@ -111,84 +111,87 @@ export default function LeaderboardTable() {
   }
 
   return (
-    <div className="space-y-3 animate-slide-up">
-      {/* Header Row */}
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 text-[var(--text-muted)] text-xs uppercase tracking-wider">
-        <div className="col-span-1">Rank</div>
-        <div className="col-span-4">Player</div>
-        <div className="col-span-3 text-center flex items-center justify-center gap-1">
-          <Star className="w-3 h-3" />
-          <span>Score</span>
-          <div className="relative group">
-            <Info className="w-3 h-3 cursor-help" />
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block pointer-events-none z-50">
-              <div className="card-glow px-3 py-2 text-[var(--text-secondary)] text-xs whitespace-nowrap">
-                avg_stars × ln(total_games)
+    <div className="animate-slide-up">
+      {/* Desktop Layout (hidden on mobile) */}
+      <div className="hidden md:block space-y-3">
+        {/* Header Row */}
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 text-[var(--text-muted)] text-xs uppercase tracking-wider">
+          <div className="col-span-1">Rank</div>
+          <div className="col-span-4">Player</div>
+          <div className="col-span-3 text-center flex items-center justify-center gap-1">
+            <Star className="w-3 h-3" />
+            <span>Score</span>
+            <div className="relative group">
+              <Info className="w-3 h-3 cursor-help" />
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block pointer-events-none z-50">
+                <div className="card-glow px-3 py-2 text-[var(--text-secondary)] text-xs whitespace-nowrap">
+                  avg_stars × ln(total_games)
+                </div>
               </div>
             </div>
           </div>
+          <div className="col-span-2 text-center">Games</div>
+          <div className="col-span-2 text-center">Best</div>
         </div>
-        <div className="col-span-2 text-center">Games</div>
-        <div className="col-span-2 text-center">Best</div>
-      </div>
 
-      {/* Player Rows */}
-      {leaderboard.map((entry, index) => (
-        <div
-          key={entry.user_id}
-          className={`
-            card-glow grid grid-cols-12 gap-4 px-4 py-4 items-center
-            ${getRowStyle(entry.rank)}
-            transition-all duration-200 hover:scale-[1.01]
-          `}
-          style={{ animationDelay: `${index * 0.05}s` }}
-        >
-          {/* Rank */}
-          <div className="col-span-1">
-            {getRankDisplay(entry.rank)}
-          </div>
+        {/* Player Rows */}
+        {leaderboard.map((entry, index) => (
+          <div
+            key={entry.user_id}
+            className={`
+              card-glow grid grid-cols-12 gap-4 px-4 py-4 items-center
+              ${getRowStyle(entry.rank)}
+              transition-all duration-200 hover:scale-[1.01]
+            `}
+            style={{ animationDelay: `${index * 0.05}s` }}
+          >
+            {/* Rank */}
+            <div className="col-span-1">
+              {getRankDisplay(entry.rank)}
+            </div>
 
-          {/* Username */}
-          <div className="col-span-4">
-            <span
-              className={`font-medium ${entry.rank <= 3 ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
-              style={{ fontFamily: 'var(--font-space-mono)' }}
-            >
-              {entry.username}
-            </span>
-          </div>
-
-          {/* Score */}
-          <div className="col-span-3 text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Star className="w-4 h-4 text-[var(--accent-yellow)] fill-[var(--accent-yellow)]" />
+            {/* Username */}
+            <div className="col-span-4">
               <span
-                className="text-lg font-bold text-[var(--text-primary)]"
+                className={`font-medium ${entry.rank <= 3 ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
                 style={{ fontFamily: 'var(--font-space-mono)' }}
               >
-                {entry.weighted_average.toFixed(2)}
+                {entry.username}
               </span>
             </div>
-          </div>
 
-          {/* Total Games */}
-          <div className="col-span-2 text-center">
-            <span className="text-[var(--text-secondary)]" style={{ fontFamily: 'var(--font-space-mono)' }}>
-              {entry.total_puzzles_completed}
-            </span>
-          </div>
+            {/* Score */}
+            <div className="col-span-3 text-center">
+              <div className="flex items-center justify-center gap-1">
+                <Star className="w-4 h-4 text-[var(--accent-yellow)] fill-[var(--accent-yellow)]" />
+                <span
+                  className="text-lg font-bold text-[var(--text-primary)]"
+                  style={{ fontFamily: 'var(--font-space-mono)' }}
+                >
+                  {entry.weighted_average.toFixed(2)}
+                </span>
+              </div>
+            </div>
 
-          {/* Best Time */}
-          <div className="col-span-2 text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Clock className="w-3 h-3 text-[var(--accent-cyan)]" />
+            {/* Total Games */}
+            <div className="col-span-2 text-center">
               <span className="text-[var(--text-secondary)]" style={{ fontFamily: 'var(--font-space-mono)' }}>
-                {formatTime(entry.best_time_seconds)}
+                {entry.total_puzzles_completed}
               </span>
             </div>
+
+            {/* Best Time */}
+            <div className="col-span-2 text-center">
+              <div className="flex items-center justify-center gap-1">
+                <Clock className="w-3 h-3 text-[var(--accent-cyan)]" />
+                <span className="text-[var(--text-secondary)]" style={{ fontFamily: 'var(--font-space-mono)' }}>
+                  {formatTime(entry.best_time_seconds)}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {/* Mobile Cards (hidden on desktop) */}
       <div className="md:hidden space-y-3">
