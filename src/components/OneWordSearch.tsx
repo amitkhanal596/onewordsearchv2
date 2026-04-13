@@ -436,7 +436,9 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
                       }
                     `}
                     style={{
-                      fontFamily: "var(--font-space-mono)",
+                      fontFamily: "var(--font-geist-sans)",
+                      fontWeight: "700",
+                      letterSpacing: "0.02em",
                       boxShadow: isSelected
                         ? "0 0 20px rgba(0, 245, 255, 0.4)"
                         : "none",
