@@ -355,6 +355,16 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
   const isCellSelected = (row: number, col: number): boolean =>
     selectedCells.some(([r, c]) => r === row && c === col);
 
+  // Handle when mouse/touch leaves the game board - check the word if we have 5 selected
+  const handleBoardLeave = () => {
+    if (isSelecting && !isAnimating) {
+      if (selectedCells.length === 5) {
+        checkSelectedWord();
+      }
+      setIsSelecting(false);
+    }
+  };
+
   const progress = wordsToFind.length > 0 ? (foundWords.length / wordsToFind.length) * 100 : 0;
 
   return (
@@ -458,7 +468,7 @@ const OneWordSearch: React.FC<OneWordSearchProps> = ({
         <div className="card-glow-cyan p-6 mb-3 animate-scale-in">
           <div
             className="grid grid-cols-5 gap-2 touch-none"
-            onMouseLeave={() => setIsSelecting(false)}
+            onMouseLeave={handleBoardLeave}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
