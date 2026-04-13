@@ -20,7 +20,7 @@
  * 6. Acknowledge event and continue
  */
 
-import Redis from 'ioredis';
+import { Redis } from '@upstash/redis';
 import type {
   PuzzleCompletedEventPayload,
   WorkerConfig,
@@ -34,7 +34,7 @@ import { createLeaderboardRepository } from './repository';
  * Default worker configuration
  */
 const DEFAULT_CONFIG: WorkerConfig = {
-  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  redisUrl: process.env.UPSTASH_REDIS_REST_URL || '',
   queueName: LEADERBOARD_QUEUE_NAME,
   batchSize: 10, // Process up to 10 events per batch
   pollIntervalMs: 1000, // Poll every 1 second
@@ -54,17 +54,17 @@ export class LeaderboardWorker {
 
   constructor(config: Partial<WorkerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    this.redis = new Redis(this.config.redisUrl, {
-      maxRetriesPerRequest: 3,
-      enableReadyCheck: true,
-      retryStrategy: (times) => {
-        if (times > 3) {
-          console.error('[LeaderboardWorker] Max Redis retries reached');
-          return null;
-        }
-        const delay = Math.min(times * 1000, 5000);
-        return delay;
-      },
+
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    if (!url || !token) {
+      throw new Error('[LeaderboardWorker] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required');
+    }
+
+    this.redis = new Redis({
+      url,
+      token,
     });
 
     this.repository = createLeaderboardRepository();
@@ -78,25 +78,7 @@ export class LeaderboardWorker {
       errors: [],
     };
 
-    this.setupRedisListeners();
-  }
-
-  /**
-   * Setup Redis event listeners
-   */
-  private setupRedisListeners(): void {
-    this.redis.on('error', (error) => {
-      console.error('[LeaderboardWorker] Redis error:', error);
-      this.recordError('Redis connection error', error);
-    });
-
-    this.redis.on('connect', () => {
-      console.info('[LeaderboardWorker] Connected to Redis');
-    });
-
-    this.redis.on('ready', () => {
-      console.info('[LeaderboardWorker] Redis client ready');
-    });
+    console.info('[LeaderboardWorker] Upstash Redis client initialized');
   }
 
   /**
@@ -153,7 +135,7 @@ export class LeaderboardWorker {
       const events: string[] = [];
 
       for (let i = 0; i < this.config.batchSize; i++) {
-        const event = await this.redis.lpop(this.config.queueName);
+        const event = await this.redis.lpop<string>(this.config.queueName);
         if (!event) break; // Queue is empty
         events.push(event);
       }
@@ -282,9 +264,7 @@ export class LeaderboardWorker {
       await this.sleep(100);
     }
 
-    // Disconnect from Redis
-    await this.redis.quit();
-
+    // Upstash REST client doesn't need explicit disconnection
     console.info('[LeaderboardWorker] Shutdown complete', {
       eventsProcessed: this.status.eventsProcessed,
       eventsSkipped: this.status.eventsSkipped,

@@ -88,58 +88,29 @@ class StubEventEmitter implements EventEmitter {
 }
 
 /**
- * Redis implementation for production
+ * Redis implementation for production using Upstash REST API
  */
-import Redis from 'ioredis';
+import { Redis } from '@upstash/redis';
 
 class RedisEventEmitter implements EventEmitter {
   private client: Redis;
   private queueName = 'leaderboard_events';
-  private maxRetries = 3;
-  private retryDelayMs = 1000;
 
   constructor() {
-    // Support both REDIS_URL (full connection string) and individual params
-    const redisUrl = process.env.REDIS_URL;
+    // Use Upstash REST API (serverless-friendly)
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-    if (redisUrl) {
-      this.client = new Redis(redisUrl, {
-        maxRetriesPerRequest: this.maxRetries,
-        enableReadyCheck: true,
-        retryStrategy: (times) => {
-          if (times > this.maxRetries) {
-            console.error('[EventEmitter] Max retries reached, giving up');
-            return null;
-          }
-          const delay = Math.min(times * this.retryDelayMs, 5000);
-          return delay;
-        },
-      });
-    } else {
-      this.client = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        password: process.env.REDIS_PASSWORD,
-        maxRetriesPerRequest: this.maxRetries,
-        enableReadyCheck: true,
-        retryStrategy: (times) => {
-          if (times > this.maxRetries) {
-            console.error('[EventEmitter] Max retries reached, giving up');
-            return null;
-          }
-          const delay = Math.min(times * this.retryDelayMs, 5000);
-          return delay;
-        },
-      });
+    if (!url || !token) {
+      throw new Error('[EventEmitter] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required');
     }
 
-    this.client.on('error', (error) => {
-      console.error('[EventEmitter] Redis connection error:', error);
+    this.client = new Redis({
+      url,
+      token,
     });
 
-    this.client.on('connect', () => {
-      console.info('[EventEmitter] Connected to Redis');
-    });
+    console.info('[EventEmitter] Upstash Redis client initialized');
   }
 
   async emitPuzzleCompleted(event: PuzzleCompletedEvent): Promise<void> {
@@ -170,7 +141,8 @@ class RedisEventEmitter implements EventEmitter {
   }
 
   async disconnect(): Promise<void> {
-    await this.client.quit();
+    // Upstash REST client doesn't need explicit disconnection
+    console.info('[EventEmitter] Upstash client cleanup (no-op for REST)');
   }
 }
 
@@ -179,10 +151,10 @@ class RedisEventEmitter implements EventEmitter {
  * Switch between stub and Redis based on environment
  */
 export function createEventEmitter(): EventEmitter {
-  const useRedis = process.env.REDIS_URL !== undefined || process.env.REDIS_HOST !== undefined;
+  const useRedis = process.env.UPSTASH_REDIS_REST_URL !== undefined && process.env.UPSTASH_REDIS_REST_TOKEN !== undefined;
 
   if (useRedis) {
-    console.info('[EventEmitter] Redis mode enabled');
+    console.info('[EventEmitter] Upstash Redis mode enabled');
     return new RedisEventEmitter();
   }
 

@@ -21,7 +21,7 @@
 import { NextResponse } from 'next/server';
 import { createLeaderboardRepository } from '@/services/leaderboard/repository';
 import type { LeaderboardHealthCheckResponse } from '@/types/leaderboard';
-import Redis from 'ioredis';
+import { Redis } from '@upstash/redis';
 
 /**
  * GET /api/leaderboard/health
@@ -34,27 +34,20 @@ export async function GET(): Promise<NextResponse> {
     const repository = createLeaderboardRepository();
     const dbHealthy = await repository.healthCheck();
 
-    // Check Redis (if configured)
+    // Check Redis (if configured with Upstash)
     let redisHealthy = false;
-    const redisUrl = process.env.REDIS_URL || process.env.REDIS_HOST;
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-    if (redisUrl) {
+    if (upstashUrl && upstashToken) {
       try {
-        const redis = process.env.REDIS_URL
-          ? new Redis(process.env.REDIS_URL, {
-              connectTimeout: 5000,
-              maxRetriesPerRequest: 1,
-            })
-          : new Redis({
-              host: process.env.REDIS_HOST || 'localhost',
-              port: parseInt(process.env.REDIS_PORT || '6379', 10),
-              connectTimeout: 5000,
-              maxRetriesPerRequest: 1,
-            });
+        const redis = new Redis({
+          url: upstashUrl,
+          token: upstashToken,
+        });
 
         const pong = await redis.ping();
         redisHealthy = pong === 'PONG';
-        await redis.quit();
       } catch (error) {
         console.error('[LeaderboardHealth] Redis health check failed:', error);
         redisHealthy = false;
